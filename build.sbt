@@ -14,12 +14,13 @@ lazy val root = (project in file("."))
   .dependsOn(allModules.map(ClasspathDependency(_, None)): _*)
 
 lazy val allModules: Seq[ProjectReference] = Seq(
-  hogeModules,
+  dbioModules,
 ).flatten
 
-lazy val hogeModules: Seq[ProjectReference] = Seq(
-  hogeLib,
+lazy val dbioModules: Seq[ProjectReference] = Seq(
+  dbioProject,
 )
 
-lazy val hogeLib = (project in file("modules/hoge/lib"))
+lazy val dbioProject = (project in file("modules/dbio"))
   .settings(Common.commonSettings)
+  .settings(DBIO.settings)
