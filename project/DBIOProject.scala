@@ -1,10 +1,10 @@
 import sbt.Keys._
 import sbt._
 
-object DBIO {
+object DBIOProject {
   lazy val settings = Seq(
     libraryDependencies ++= Seq(
-      "io.monix" %% "monix-eval" % "3.4.1"
+      "org.atnos" %% "eff-cats-effect" % "6.0.1"
     )
   )
 }
