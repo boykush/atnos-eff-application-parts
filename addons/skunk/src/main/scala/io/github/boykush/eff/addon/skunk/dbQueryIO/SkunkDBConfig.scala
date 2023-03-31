@@ -1,4 +1,4 @@
-package io.github.boykush.eff.addon.skunk.dbSessionIO
+package io.github.boykush.eff.addon.skunk.dbQueryIO
 
 case class SkunkDBConfig(
   host: String,
