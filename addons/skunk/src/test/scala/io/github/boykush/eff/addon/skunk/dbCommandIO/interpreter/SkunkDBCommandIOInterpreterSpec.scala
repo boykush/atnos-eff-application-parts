@@ -1,15 +1,12 @@
 package io.github.boykush.eff.addon.skunk.dbCommandIO.interpreter
 
-import cats.effect._
 import cats.effect.unsafe.implicits.global
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
 import io.github.boykush.eff.addon.skunk.dbCommandIO.SkunkDBCommandIOEffect
-import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIO
 import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOError
+import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOTypes.DBCommandIOStack
 import io.github.boykush.eff.syntax.addon.skunk.dbCommandIO.ToSkunkDBCommandIOOps
 import org.atnos.eff.Eff
-import org.atnos.eff.Fx
-import org.atnos.eff.all._
 import org.atnos.eff.either.errorTranslate
 import org.atnos.eff.syntax.addon.cats.effect._
 import org.atnos.eff.syntax.all._
@@ -35,7 +32,7 @@ class SkunkDBCommandIOInterpreterSpec extends AnyFreeSpec with Matchers {
       maxConnections = 1
     )
 
-    type R = Fx.fx3[DBCommandIO, IO, ThrowableEither]
+    type R = DBCommandIOStack
     implicit val interpreter: SkunkDBCommandIOInterpreter =
       new SkunkDBCommandIOInterpreter(
         testDBConfig

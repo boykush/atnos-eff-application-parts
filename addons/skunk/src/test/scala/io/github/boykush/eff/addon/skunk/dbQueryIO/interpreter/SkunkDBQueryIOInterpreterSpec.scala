@@ -1,21 +1,18 @@
 package io.github.boykush.eff.addon.skunk.dbQueryIO.interpreter
 
-import cats.effect._
 import cats.effect.unsafe.implicits.global
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
 import io.github.boykush.eff.addon.skunk.dbCommandIO.SkunkDBCommandIOEffect
 import io.github.boykush.eff.addon.skunk.dbCommandIO.interpreter.SkunkDBCommandIOInterpreter
 import io.github.boykush.eff.addon.skunk.dbQueryIO.SkunkDBQueryIOEffect
-import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIO
+import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOEffect._
 import io.github.boykush.eff.dbio.dbQueryIO.DBQueryIOError
-import io.github.boykush.eff.dbio.dbQueryIO.DBQueryIO
+import io.github.boykush.eff.dbio.dbQueryIO.DBQueryIOEffect._
 import io.github.boykush.eff.syntax.addon.skunk.dbQueryIO.ToSkunkDBQueryIOOps
 import io.github.boykush.eff.syntax.addon.skunk.dbCommandIO.ToSkunkDBCommandIOOps
 import org.scalatest.freespec.AnyFreeSpec
 import org.atnos.eff.Eff
-import org.atnos.eff.Fx
 import org.atnos.eff.syntax.addon.cats.effect._
-import org.atnos.eff.all._
 import org.atnos.eff.either.errorTranslate
 import org.atnos.eff.syntax.all._
 import org.scalatest.matchers.must.Matchers
@@ -39,8 +36,8 @@ class SkunkDBQueryIOInterpreterSpec extends AnyFreeSpec with Matchers {
       maxConnections = 1
     )
 
-    type DBCommandIOStack = Fx.fx3[DBCommandIO, IO, ThrowableEither]
-    type DBQueryIOStack   = Fx.fx3[DBQueryIO, IO, ThrowableEither]
+    type R1 = DBCommandIOStack
+    type R2 = DBQueryIOStack
     implicit val dbQueryIOInterpreter: SkunkDBQueryIOInterpreter = new SkunkDBQueryIOInterpreter(
       testDBConfig
     )
@@ -68,8 +65,8 @@ class SkunkDBQueryIOInterpreterSpec extends AnyFreeSpec with Matchers {
       "Select record" in new SetUp {
         val uuid: String = UUID.randomUUID().toString
 
-        val effects1: Eff[DBCommandIOStack, Unit] =
-          SkunkDBCommandIOEffect.withDBSession[DBCommandIOStack, Unit] { session =>
+        val effects1: Eff[R1, Unit] =
+          SkunkDBCommandIOEffect.withDBSession[R1, Unit] { session =>
             for {
               _ <- session.execute(createTable()).void
               _ <- session.prepare(insert()).flatMap(pc => pc.execute(uuid))
@@ -85,8 +82,8 @@ class SkunkDBQueryIOInterpreterSpec extends AnyFreeSpec with Matchers {
 
         result1.isRight mustBe true
 
-        val effects2: Eff[DBQueryIOStack, Option[String]] =
-          SkunkDBQueryIOEffect.withDBSession[DBQueryIOStack, Option[String]] { session =>
+        val effects2: Eff[R2, Option[String]] =
+          SkunkDBQueryIOEffect.withDBSession[R2, Option[String]] { session =>
             session.prepare(select).flatMap(pq => pq.option(uuid))
           }
 
@@ -100,8 +97,8 @@ class SkunkDBQueryIOInterpreterSpec extends AnyFreeSpec with Matchers {
         result2 mustBe Right(Some(uuid))
       }
       "Catch DBQueryIOError about cannot command in read-only session" in new SetUp {
-        val effects: Eff[DBQueryIOStack, Unit] =
-          SkunkDBQueryIOEffect.withDBSession[DBQueryIOStack, Unit] { session =>
+        val effects: Eff[R2, Unit] =
+          SkunkDBQueryIOEffect.withDBSession[R2, Unit] { session =>
             for {
               _ <- session.execute(createTable()).void
             } yield ()
