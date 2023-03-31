@@ -3,8 +3,8 @@ package io.github.boykush.eff.addon.skunk.dbQueryIO.interpreter
 import com.google.inject.Inject
 import cats.effect._
 import cats.effect.kernel.Resource
+import io.github.boykush.eff.addon.skunk.SkunkDBConfig
 import io.github.boykush.eff.addon.skunk.SkunkDBSession
-import io.github.boykush.eff.addon.skunk.dbQueryIO.SkunkDBConfig
 import io.github.boykush.eff.dbio.dbQueryIO.DBQueryIO
 import io.github.boykush.eff.dbio.dbQueryIO.DBQueryIOError
 import io.github.boykush.eff.dbio.dbQueryIO.WithDBSession
