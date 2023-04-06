@@ -1,10 +1,9 @@
 package io.github.boykush.eff.addon.skunk.dbCommandIO.interpreter
 
 import cats.effect.unsafe.implicits.global
-import io.github.boykush.eff.addon.skunk.AbstractFreeSpec
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
-import io.github.boykush.eff.addon.skunk.SkunkTestStatementMethods
-import io.github.boykush.eff.addon.skunk.SkunkTestStatementMethods.Pet
+import io.github.boykush.eff.addon.skunk.AbstractFreeSkunkDBSpec
+import io.github.boykush.eff.addon.skunk.AbstractFreeSkunkDBSpec.Pet
 import io.github.boykush.eff.addon.skunk.TestDB
 import io.github.boykush.eff.addon.skunk.dbCommandIO.SkunkDBCommandIOEffect
 import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOError
@@ -14,7 +13,7 @@ import org.atnos.eff.Eff
 import org.atnos.eff.syntax.addon.cats.effect._
 import org.atnos.eff.syntax.all._
 
-class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec with SkunkTestStatementMethods {
+class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSkunkDBSpec {
 
   trait SetUp {
     val testDBConfig: SkunkDBConfig = TestDB.skunkDBConfig
@@ -43,10 +42,9 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec with SkunkTestSta
         val effects: Eff[R, Option[Pet]] =
           SkunkDBCommandIOEffect.withDBSession[R, Option[Pet]] { session =>
             for {
-              _        <- session.execute(createTable).void
-              _        <- session.prepare(insert).flatMap(pc => pc.execute(pet))
+              _        <- session.prepare(insertPet()).flatMap(pc => pc.execute(pet))
               maybePet <-
-                session.prepare(selectByName).flatMap(pq => pq.option(pet.name))
+                session.prepare(selectPetByName).flatMap(pq => pq.option(pet.name))
             } yield maybePet
           }
 
@@ -64,9 +62,8 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec with SkunkTestSta
         val effects1: Eff[R, Unit] =
           SkunkDBCommandIOEffect.withDBSession[R, Unit] { session =>
             for {
-              _ <- session.execute(createTable).void
-              _ <- session.prepare(insert).flatMap(pc => pc.execute(pet))
-              _ <- session.prepare(insert).flatMap(pc => pc.execute(pet))
+              _ <- session.prepare(insertPet()).flatMap(pc => pc.execute(pet))
+              _ <- session.prepare(insertPet()).flatMap(pc => pc.execute(pet))
             } yield ()
           }
 
@@ -79,31 +76,23 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec with SkunkTestSta
 
         checkDuplicateKeyError(result1) mustBe true
 
-        val effects2: Eff[R, Option[Pet]] =
-          SkunkDBCommandIOEffect.withDBSession[R, Option[Pet]] { session =>
-            session.prepare(selectByName).flatMap(pq => pq.option(pet.name))
-          }
-
-        val result2: Either[Throwable, Option[Pet]] = await(
-          effects2.runDBCommandIO
-            .runEither[Throwable]
-            .unsafeToFuture
+        val result2: Option[Pet] = await(
+          sessionUse(session => session.prepare(selectPetByName).flatMap(pq => pq.option(pet.name)))
+            .unsafeToFuture()
         )
 
-        result2 mustBe Right(None)
+        result2 mustBe None
       }
       "Sessions are shared within a single interpreter run" in new SetUp {
         val pet: Pet = Pet.randomGen
 
         val effects1: Eff[R, Unit] = {
           for {
-            _ <-
-              SkunkDBCommandIOEffect.withDBSession[R, Unit](_.execute(createTable).void)
             _ <- SkunkDBCommandIOEffect.withDBSession[R, Unit](
-              _.prepare(insert).flatMap(pc => pc.execute(pet)).void
+              _.prepare(insertPet()).flatMap(pc => pc.execute(pet)).void
             )
             _ <- SkunkDBCommandIOEffect.withDBSession[R, Unit](
-              _.prepare(insert).flatMap(pc => pc.execute(pet)).void
+              _.prepare(insertPet()).flatMap(pc => pc.execute(pet)).void
             )
           } yield ()
         }
@@ -117,19 +106,13 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec with SkunkTestSta
 
         checkDuplicateKeyError(result1) mustBe true
 
-        val effects2: Eff[R, Option[Pet]] =
-          SkunkDBCommandIOEffect.withDBSession[R, Option[Pet]](session =>
-            session.prepare(selectByName).flatMap(pq => pq.option(pet.name))
-          )
-
-        val result2: Either[Throwable, Option[Pet]] = await(
-          effects2.runDBCommandIO
-            .runEither[Throwable]
-            .unsafeToFuture
+        val result2: Option[Pet] = await(
+          sessionUse(session => session.prepare(selectPetByName).flatMap(pq => pq.option(pet.name)))
+            .unsafeToFuture()
         )
 
         // All commands without an eff context are rolled back
-        result2 mustBe Right(None)
+        result2 mustBe None
       }
     }
   }
