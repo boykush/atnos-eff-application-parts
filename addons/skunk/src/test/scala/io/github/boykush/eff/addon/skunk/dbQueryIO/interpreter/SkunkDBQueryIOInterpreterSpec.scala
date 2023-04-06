@@ -1,7 +1,10 @@
 package io.github.boykush.eff.addon.skunk.dbQueryIO.interpreter
 
 import cats.effect.unsafe.implicits.global
+import io.github.boykush.eff.addon.skunk.AbstractFreeSpec
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
+import io.github.boykush.eff.addon.skunk.SkunkTestPetService
+import io.github.boykush.eff.addon.skunk.SkunkTestPetService.Pet
 import io.github.boykush.eff.addon.skunk.TestDB
 import io.github.boykush.eff.addon.skunk.dbCommandIO.SkunkDBCommandIOEffect
 import io.github.boykush.eff.addon.skunk.dbCommandIO.interpreter.SkunkDBCommandIOInterpreter
@@ -11,21 +14,11 @@ import io.github.boykush.eff.dbio.dbQueryIO.DBQueryIOError
 import io.github.boykush.eff.dbio.dbQueryIO.DBQueryIOEffect._
 import io.github.boykush.eff.syntax.addon.skunk.dbQueryIO.ToSkunkDBQueryIOOps
 import io.github.boykush.eff.syntax.addon.skunk.dbCommandIO.ToSkunkDBCommandIOOps
-import org.scalatest.freespec.AnyFreeSpec
 import org.atnos.eff.Eff
 import org.atnos.eff.syntax.addon.cats.effect._
-import org.atnos.eff.either.errorTranslate
 import org.atnos.eff.syntax.all._
-import org.scalatest.matchers.must.Matchers
-import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
-import skunk._
-import skunk.codec.all._
-import skunk.implicits._
 
-import java.util.UUID
-import scala.concurrent.Await
-
-class SkunkDBQueryIOInterpreterSpec extends AnyFreeSpec with Matchers {
+class SkunkDBQueryIOInterpreterSpec extends AbstractFreeSpec {
 
   trait SetUp {
     val testDBConfig: SkunkDBConfig = TestDB.skunkDBConfig
@@ -40,76 +33,62 @@ class SkunkDBQueryIOInterpreterSpec extends AnyFreeSpec with Matchers {
         testDBConfig
       )
 
-    def createTable(): Command[Void] =
-      sql"CREATE TABLE IF NOT EXISTS skunk_db_query_io (name varchar unique)".command
-
-    def insert(): Command[String] =
-      sql"""
-              INSERT INTO skunk_db_query_io VALUES ($varchar);
-         """.command
-
-    def select: Query[String, String] =
-      sql"""
-              SELECT name FROM skunk_db_query_io WHERE name = $varchar;
-         """.query(varchar)
+    val petService: SkunkTestPetService = new SkunkTestPetService("skunk_db_query_io")
   }
 
   "#run" - {
     "WithDBSession" - {
       "Select record" in new SetUp {
-        val uuid: String = UUID.randomUUID().toString
+        val pet: Pet = Pet.randomGen
 
         val effects1: Eff[R1, Unit] =
           SkunkDBCommandIOEffect.withDBSession[R1, Unit] { session =>
             for {
-              _ <- session.execute(createTable()).void
-              _ <- session.prepare(insert()).flatMap(pc => pc.execute(uuid))
+              _ <- session.execute(petService.createTable).void
+              _ <- session.prepare(petService.insert).flatMap(pc => pc.execute(pet))
             } yield ()
           }
 
-        val result1: Either[Throwable, Unit] = Await.result(
+        val result1: Either[Throwable, Unit] = await(
           effects1.runDBCommandIO
             .runEither[Throwable]
-            .unsafeToFuture,
-          1.minutes
+            .unsafeToFuture
         )
 
         result1.isRight mustBe true
 
-        val effects2: Eff[R2, Option[String]] =
-          SkunkDBQueryIOEffect.withDBSession[R2, Option[String]] { session =>
-            session.prepare(select).flatMap(pq => pq.option(uuid))
+        val effects2: Eff[R2, Option[Pet]] =
+          SkunkDBQueryIOEffect.withDBSession[R2, Option[Pet]] { session =>
+            session.prepare(petService.selectByName).flatMap(pq => pq.option(pet.name))
           }
 
-        val result2: Either[Throwable, Option[String]] = Await.result(
+        val result2: Either[Throwable, Option[Pet]] = await(
           effects2.runDBQueryIO
             .runEither[Throwable]
-            .unsafeToFuture,
-          1.minutes
+            .unsafeToFuture
         )
 
-        result2 mustBe Right(Some(uuid))
+        result2 mustBe Right(Some(pet))
       }
       "Catch DBQueryIOError about cannot command in read-only session" in new SetUp {
         val effects: Eff[R2, Unit] =
           SkunkDBQueryIOEffect.withDBSession[R2, Unit] { session =>
             for {
-              _ <- session.execute(createTable()).void
+              _ <- session.execute(petService.createTable).void
             } yield ()
           }
 
-        val result: Either[Throwable, Unit] = Await.result(
+        val result: Either[Throwable, Unit] = await(
           effects.runDBQueryIO
             .runEither[Throwable]
-            .unsafeToFuture,
-          1.minutes
+            .unsafeToFuture
         )
 
         result match {
-          case Left(DBQueryIOError(message)) => {
-            message.contains("read-only") mustBe true
+          case Left(DBQueryIOError(e)) => {
+            e.getMessage.contains("read-only") mustBe true
           }
-          case _                             => fail
+          case _                       => fail
         }
       }
     }

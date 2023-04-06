@@ -45,7 +45,7 @@ class SkunkDBQueryIOInterpreter @Inject() (
             }
           }.flatMap(either =>
             fromEither[U, Throwable, X](
-              either.left.map(e => DBQueryIOError(e.getMessage))
+              either.left.map(e => DBQueryIOError(e))
             )
           )
       }
