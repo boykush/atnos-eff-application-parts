@@ -2,6 +2,7 @@ package io.github.boykush.eff.addon.skunk.dbCommandIO.interpreter
 
 import cats.effect.unsafe.implicits.global
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
+import io.github.boykush.eff.addon.skunk.TestDB
 import io.github.boykush.eff.addon.skunk.dbCommandIO.SkunkDBCommandIOEffect
 import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOError
 import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOTypes.DBCommandIOStack
@@ -23,14 +24,7 @@ import scala.concurrent.Await
 class SkunkDBCommandIOInterpreterSpec extends AnyFreeSpec with Matchers {
 
   trait SetUp {
-    val testDBConfig: SkunkDBConfig = SkunkDBConfig(
-      host = "localhost",
-      port = 5432,
-      user = "user",
-      password = "password",
-      database = "addons_skunk_test",
-      maxConnections = 1
-    )
+    val testDBConfig: SkunkDBConfig = TestDB.skunkDBConfig
 
     type R = DBCommandIOStack
     implicit val interpreter: SkunkDBCommandIOInterpreter =
