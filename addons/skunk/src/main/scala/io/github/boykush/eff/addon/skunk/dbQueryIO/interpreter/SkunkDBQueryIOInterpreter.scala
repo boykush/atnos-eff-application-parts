@@ -28,8 +28,8 @@ class SkunkDBQueryIOInterpreter @Inject() (
     io: _io[U],
     te: _throwableEither[U]
   ): Eff[U, A] = translate(effects)(new Translate[DBQueryIO, U] {
-    override def apply[X](sessionIO: DBQueryIO[X]): Eff[U, X] =
-      sessionIO match {
+    override def apply[X](queryIO: DBQueryIO[X]): Eff[U, X] =
+      queryIO match {
         case WithDBSession(f: (SkunkDBSession => IO[X])) => fromIO[U, ThrowableEither[X]] {
             dbResource.use { pooled =>
               pooled.use { session =>
