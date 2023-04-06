@@ -1,10 +1,10 @@
 version: '3'
 
 services:
-  addons_skunk_test_db:
+  addons_skunk_local_test_db:
     image: postgres
     environment:
-      POSTGRES_DB: addons_skunk_test
+      POSTGRES_DB: addons_skunk_local_test
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     ports:

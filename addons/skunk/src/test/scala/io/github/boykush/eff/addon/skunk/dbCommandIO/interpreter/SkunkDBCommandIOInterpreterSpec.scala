@@ -2,6 +2,7 @@ package io.github.boykush.eff.addon.skunk.dbCommandIO.interpreter
 
 import cats.effect.unsafe.implicits.global
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
+import io.github.boykush.eff.addon.skunk.TestDB
 import io.github.boykush.eff.addon.skunk.dbCommandIO.SkunkDBCommandIOEffect
 import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOError
 import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOTypes.DBCommandIOStack
@@ -23,14 +24,7 @@ import scala.concurrent.Await
 class SkunkDBCommandIOInterpreterSpec extends AnyFreeSpec with Matchers {
 
   trait SetUp {
-    val testDBConfig: SkunkDBConfig = SkunkDBConfig(
-      host = "localhost",
-      port = 5432,
-      user = "user",
-      password = "password",
-      database = "addons_skunk_test",
-      maxConnections = 1
-    )
+    val testDBConfig: SkunkDBConfig = TestDB.skunkDBConfig
 
     type R = DBCommandIOStack
     implicit val interpreter: SkunkDBCommandIOInterpreter =
@@ -39,16 +33,16 @@ class SkunkDBCommandIOInterpreterSpec extends AnyFreeSpec with Matchers {
       )
 
     def createTable(): Command[Void] =
-      sql"CREATE TABLE IF NOT EXISTS skunk_session_io (name varchar unique)".command
+      sql"CREATE TABLE IF NOT EXISTS skunk_db_command_io (name varchar unique)".command
 
     def insert(): Command[String] =
       sql"""
-              INSERT INTO skunk_session_io VALUES ($varchar);
+              INSERT INTO skunk_db_command_io VALUES ($varchar);
          """.command
 
     def select: Query[String, String] =
       sql"""
-              SELECT name FROM skunk_session_io WHERE name = $varchar;
+              SELECT name FROM skunk_db_command_io WHERE name = $varchar;
          """.query(varchar)
 
     def checkDuplicateKeyError(result: Either[Throwable, Unit]): Boolean =
