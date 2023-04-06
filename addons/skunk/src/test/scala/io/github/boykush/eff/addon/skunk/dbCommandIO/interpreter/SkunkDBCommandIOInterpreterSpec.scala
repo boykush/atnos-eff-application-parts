@@ -3,8 +3,8 @@ package io.github.boykush.eff.addon.skunk.dbCommandIO.interpreter
 import cats.effect.unsafe.implicits.global
 import io.github.boykush.eff.addon.skunk.AbstractFreeSpec
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
-import io.github.boykush.eff.addon.skunk.SkunkTestPetService
-import io.github.boykush.eff.addon.skunk.SkunkTestPetService.Pet
+import io.github.boykush.eff.addon.skunk.SkunkTestStatementMethods
+import io.github.boykush.eff.addon.skunk.SkunkTestStatementMethods.Pet
 import io.github.boykush.eff.addon.skunk.TestDB
 import io.github.boykush.eff.addon.skunk.dbCommandIO.SkunkDBCommandIOEffect
 import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOError
@@ -14,7 +14,7 @@ import org.atnos.eff.Eff
 import org.atnos.eff.syntax.addon.cats.effect._
 import org.atnos.eff.syntax.all._
 
-class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec {
+class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec with SkunkTestStatementMethods {
 
   trait SetUp {
     val testDBConfig: SkunkDBConfig = TestDB.skunkDBConfig
@@ -24,8 +24,6 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec {
       new SkunkDBCommandIOInterpreter(
         testDBConfig
       )
-
-    val petService: SkunkTestPetService = new SkunkTestPetService("skunk_db_command_io")
 
     def checkDuplicateKeyError(result: Either[Throwable, Unit]): Boolean =
       result match {
@@ -45,10 +43,10 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec {
         val effects: Eff[R, Option[Pet]] =
           SkunkDBCommandIOEffect.withDBSession[R, Option[Pet]] { session =>
             for {
-              _        <- session.execute(petService.createTable).void
-              _        <- session.prepare(petService.insert).flatMap(pc => pc.execute(pet))
+              _        <- session.execute(createTable).void
+              _        <- session.prepare(insert).flatMap(pc => pc.execute(pet))
               maybePet <-
-                session.prepare(petService.selectByName).flatMap(pq => pq.option(pet.name))
+                session.prepare(selectByName).flatMap(pq => pq.option(pet.name))
             } yield maybePet
           }
 
@@ -66,9 +64,9 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec {
         val effects1: Eff[R, Unit] =
           SkunkDBCommandIOEffect.withDBSession[R, Unit] { session =>
             for {
-              _ <- session.execute(petService.createTable).void
-              _ <- session.prepare(petService.insert).flatMap(pc => pc.execute(pet))
-              _ <- session.prepare(petService.insert).flatMap(pc => pc.execute(pet))
+              _ <- session.execute(createTable).void
+              _ <- session.prepare(insert).flatMap(pc => pc.execute(pet))
+              _ <- session.prepare(insert).flatMap(pc => pc.execute(pet))
             } yield ()
           }
 
@@ -83,7 +81,7 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec {
 
         val effects2: Eff[R, Option[Pet]] =
           SkunkDBCommandIOEffect.withDBSession[R, Option[Pet]] { session =>
-            session.prepare(petService.selectByName).flatMap(pq => pq.option(pet.name))
+            session.prepare(selectByName).flatMap(pq => pq.option(pet.name))
           }
 
         val result2: Either[Throwable, Option[Pet]] = await(
@@ -100,12 +98,12 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec {
         val effects1: Eff[R, Unit] = {
           for {
             _ <-
-              SkunkDBCommandIOEffect.withDBSession[R, Unit](_.execute(petService.createTable).void)
+              SkunkDBCommandIOEffect.withDBSession[R, Unit](_.execute(createTable).void)
             _ <- SkunkDBCommandIOEffect.withDBSession[R, Unit](
-              _.prepare(petService.insert).flatMap(pc => pc.execute(pet)).void
+              _.prepare(insert).flatMap(pc => pc.execute(pet)).void
             )
             _ <- SkunkDBCommandIOEffect.withDBSession[R, Unit](
-              _.prepare(petService.insert).flatMap(pc => pc.execute(pet)).void
+              _.prepare(insert).flatMap(pc => pc.execute(pet)).void
             )
           } yield ()
         }
@@ -121,7 +119,7 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec {
 
         val effects2: Eff[R, Option[Pet]] =
           SkunkDBCommandIOEffect.withDBSession[R, Option[Pet]](session =>
-            session.prepare(petService.selectByName).flatMap(pq => pq.option(pet.name))
+            session.prepare(selectByName).flatMap(pq => pq.option(pet.name))
           )
 
         val result2: Either[Throwable, Option[Pet]] = await(

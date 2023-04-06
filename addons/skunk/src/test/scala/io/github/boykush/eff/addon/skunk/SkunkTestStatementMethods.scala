@@ -1,6 +1,6 @@
 package io.github.boykush.eff.addon.skunk
 
-import io.github.boykush.eff.addon.skunk.SkunkTestPetService.Pet
+import io.github.boykush.eff.addon.skunk.SkunkTestStatementMethods.Pet
 import skunk._
 import skunk.codec.all._
 import skunk.implicits._
@@ -8,8 +8,9 @@ import skunk.implicits._
 import java.util.UUID
 import scala.util.Random
 
-class SkunkTestPetService(tableNamePrefix: String) {
-  val tableName: String = tableNamePrefix + "_pets"
+trait SkunkTestStatementMethods { self =>
+  val tableNamePrefix: String = self.getClass.getSimpleName
+  val tableName: String       = tableNamePrefix + "_pets"
 
   def createTable: Command[Void] =
     sql"CREATE TABLE IF NOT EXISTS #$tableName (name varchar unique, age int2)".command
@@ -27,7 +28,7 @@ class SkunkTestPetService(tableNamePrefix: String) {
       .gmap[Pet]
 }
 
-object SkunkTestPetService {
+object SkunkTestStatementMethods {
   case class Pet(name: String, age: Short)
   object Pet {
     def randomGen: Pet = Pet(name = UUID.randomUUID().toString, age = Random.between(0, 20).toShort)
