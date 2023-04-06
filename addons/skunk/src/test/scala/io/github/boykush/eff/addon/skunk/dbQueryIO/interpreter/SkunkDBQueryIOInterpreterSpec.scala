@@ -18,7 +18,6 @@ import org.atnos.eff.Eff
 import org.atnos.eff.syntax.addon.cats.effect._
 import org.atnos.eff.syntax.all._
 
-
 class SkunkDBQueryIOInterpreterSpec extends AbstractFreeSpec {
 
   trait SetUp {
@@ -86,10 +85,10 @@ class SkunkDBQueryIOInterpreterSpec extends AbstractFreeSpec {
         )
 
         result match {
-          case Left(DBQueryIOError(message)) => {
-            message.contains("read-only") mustBe true
+          case Left(DBQueryIOError(e)) => {
+            e.getMessage.contains("read-only") mustBe true
           }
-          case _                             => fail
+          case _                       => fail
         }
       }
     }

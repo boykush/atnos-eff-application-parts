@@ -14,7 +14,6 @@ import org.atnos.eff.Eff
 import org.atnos.eff.syntax.addon.cats.effect._
 import org.atnos.eff.syntax.all._
 
-
 class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec {
 
   trait SetUp {
@@ -30,11 +29,11 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec {
 
     def checkDuplicateKeyError(result: Either[Throwable, Unit]): Boolean =
       result match {
-        case Left(DBCommandIOError(message)) => {
-          message.contains("Duplicate key")
+        case Left(DBCommandIOError(e)) => {
+          e.getMessage.contains("Duplicate key")
         }
-        case Left(e)                         => false
-        case Right(_)                        => false
+        case Left(e)                   => false
+        case Right(_)                  => false
       }
   }
 

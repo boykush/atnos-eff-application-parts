@@ -63,7 +63,7 @@ class SkunkDBCommandIOInterpreter @Inject() (
             f(SkunkDBSession(session)).attempt
           ).flatMap(either =>
             fromEither[U, Throwable, X](
-              either.left.map(e => DBCommandIOError(e.getMessage))
+              either.left.map(e => DBCommandIOError(e))
             )
           )
       }
