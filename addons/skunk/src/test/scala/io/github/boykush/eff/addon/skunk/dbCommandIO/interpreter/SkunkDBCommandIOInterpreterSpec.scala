@@ -1,6 +1,7 @@
 package io.github.boykush.eff.addon.skunk.dbCommandIO.interpreter
 
 import cats.effect.unsafe.implicits.global
+import io.github.boykush.eff.addon.skunk.AbstractFreeSpec
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
 import io.github.boykush.eff.addon.skunk.TestDB
 import io.github.boykush.eff.addon.skunk.dbCommandIO.SkunkDBCommandIOEffect
@@ -8,20 +9,15 @@ import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOError
 import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOTypes.DBCommandIOStack
 import io.github.boykush.eff.syntax.addon.skunk.dbCommandIO.ToSkunkDBCommandIOOps
 import org.atnos.eff.Eff
-import org.atnos.eff.either.errorTranslate
 import org.atnos.eff.syntax.addon.cats.effect._
 import org.atnos.eff.syntax.all._
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
-import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import skunk._
 import skunk.codec.all._
 import skunk.implicits._
 
 import java.util.UUID
-import scala.concurrent.Await
 
-class SkunkDBCommandIOInterpreterSpec extends AnyFreeSpec with Matchers {
+class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSpec {
 
   trait SetUp {
     val testDBConfig: SkunkDBConfig = TestDB.skunkDBConfig
@@ -69,11 +65,10 @@ class SkunkDBCommandIOInterpreterSpec extends AnyFreeSpec with Matchers {
             } yield name
           }
 
-        val result: Either[Throwable, Option[String]] = Await.result(
+        val result: Either[Throwable, Option[String]] = await(
           effects.runDBCommandIO
             .runEither[Throwable]
-            .unsafeToFuture,
-          1.minutes
+            .unsafeToFuture
         )
 
         result mustBe Right(Some(uuid))
@@ -91,11 +86,10 @@ class SkunkDBCommandIOInterpreterSpec extends AnyFreeSpec with Matchers {
           }
 
         // Duplicate error occurred
-        val result1: Either[Throwable, Unit] = Await.result(
+        val result1: Either[Throwable, Unit] = await(
           effects1.runDBCommandIO
             .runEither[Throwable]
-            .unsafeToFuture,
-          1.minutes
+            .unsafeToFuture
         )
 
         checkDuplicateKeyError(result1) mustBe true
@@ -105,11 +99,10 @@ class SkunkDBCommandIOInterpreterSpec extends AnyFreeSpec with Matchers {
             session.prepare(select).flatMap(pq => pq.option(uuid))
           }
 
-        val result2: Either[Throwable, Option[String]] = Await.result(
+        val result2: Either[Throwable, Option[String]] = await(
           effects2.runDBCommandIO
             .runEither[Throwable]
-            .unsafeToFuture,
-          1.minutes
+            .unsafeToFuture
         )
 
         result2 mustBe Right(None)
@@ -130,11 +123,10 @@ class SkunkDBCommandIOInterpreterSpec extends AnyFreeSpec with Matchers {
         }
 
         // Duplicate error occurred
-        val result1: Either[Throwable, Unit] = Await.result(
+        val result1: Either[Throwable, Unit] = await(
           effects1.runDBCommandIO
             .runEither[Throwable]
-            .unsafeToFuture,
-          1.minutes
+            .unsafeToFuture
         )
 
         checkDuplicateKeyError(result1) mustBe true
@@ -144,11 +136,10 @@ class SkunkDBCommandIOInterpreterSpec extends AnyFreeSpec with Matchers {
             session.prepare(select).flatMap(pq => pq.option(uuid))
           )
 
-        val result2: Either[Throwable, Option[String]] = Await.result(
+        val result2: Either[Throwable, Option[String]] = await(
           effects2.runDBCommandIO
             .runEither[Throwable]
-            .unsafeToFuture,
-          1.minutes
+            .unsafeToFuture
         )
 
         // All commands without an eff context are rolled back
