@@ -41,16 +41,16 @@ class SkunkDBQueryIOInterpreterSpec extends AnyFreeSpec with Matchers {
       )
 
     def createTable(): Command[Void] =
-      sql"CREATE TABLE IF NOT EXISTS skunk_session_io (name varchar unique)".command
+      sql"CREATE TABLE IF NOT EXISTS skunk_db_query_io (name varchar unique)".command
 
     def insert(): Command[String] =
       sql"""
-              INSERT INTO skunk_session_io VALUES ($varchar);
+              INSERT INTO skunk_db_query_io VALUES ($varchar);
          """.command
 
     def select: Query[String, String] =
       sql"""
-              SELECT name FROM skunk_session_io WHERE name = $varchar;
+              SELECT name FROM skunk_db_query_io WHERE name = $varchar;
          """.query(varchar)
   }
 
