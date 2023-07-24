@@ -1,14 +1,14 @@
-package io.github.boykush.eff.addon.skunk.dbCommandIO.interpreter
+package io.github.boykush.eff.addon.skunk.dbTransactionIO.interpreter
 
 import cats.effect._
 import cats.effect.kernel.Resource
 import com.google.inject.Inject
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
 import io.github.boykush.eff.addon.skunk.SkunkDBSession
-import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIO
-import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOError
-import io.github.boykush.eff.dbio.dbCommandIO.WithDBSession
-import io.github.boykush.eff.dbio.dbCommandIO.interpreter.DBCommandIOInterpreter
+import io.github.boykush.eff.dbio.dbTransactionIO.DBTransactionIO
+import io.github.boykush.eff.dbio.dbTransactionIO.DBTransactionIOError
+import io.github.boykush.eff.dbio.dbTransactionIO.WithDBSession
+import io.github.boykush.eff.dbio.dbTransactionIO.interpreter.DBTransactionIOInterpreter
 import natchez.Trace.Implicits.noop
 import org.atnos.eff.Interpret._
 import org.atnos.eff._
@@ -19,12 +19,12 @@ import skunk._
 import skunk.data.TransactionAccessMode
 import skunk.data.TransactionIsolationLevel
 
-class SkunkDBCommandIOInterpreter @Inject() (
+class SkunkDBTransactionIOInterpreter @Inject() (
   config: SkunkDBConfig,
   isolationLevel: TransactionIsolationLevel = TransactionIsolationLevel.RepeatableRead
-) extends DBCommandIOInterpreter {
+) extends DBTransactionIOInterpreter {
   def run[R, U, A](effects: Eff[R, A])(implicit
-    m: Member.Aux[DBCommandIO, R, U],
+    m: Member.Aux[DBTransactionIO, R, U],
     io: _io[U],
     te: _throwableEither[U]
   ): Eff[U, A] =
@@ -52,18 +52,18 @@ class SkunkDBCommandIOInterpreter @Inject() (
     } yield result
 
   private def runInternal[R, U, A](effects: Eff[R, A])(session: Session[IO])(implicit
-    m: Member.Aux[DBCommandIO, R, U],
+    m: Member.Aux[DBTransactionIO, R, U],
     io: _io[U],
     te: _throwableEither[U]
-  ): Eff[U, A] = translate(effects)(new Translate[DBCommandIO, U] {
-    override def apply[X](sessionIO: DBCommandIO[X]): Eff[U, X] =
+  ): Eff[U, A] = translate(effects)(new Translate[DBTransactionIO, U] {
+    override def apply[X](sessionIO: DBTransactionIO[X]): Eff[U, X] =
       sessionIO match {
         case WithDBSession(f: (SkunkDBSession => IO[X])) =>
           fromIO[U, ThrowableEither[X]](
             f(SkunkDBSession(session)).attempt
           ).flatMap(either =>
             fromEither[U, Throwable, X](
-              either.left.map(e => DBCommandIOError(e))
+              either.left.map(e => DBTransactionIOError(e))
             )
           )
       }

@@ -1,36 +1,36 @@
-package io.github.boykush.eff.addon.skunk.dbCommandIO.interpreter
+package io.github.boykush.eff.addon.skunk.dbTransactionIO.interpreter
 
 import cats.effect.unsafe.implicits.global
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
 import io.github.boykush.eff.addon.skunk.AbstractFreeSkunkDBSpec
 import io.github.boykush.eff.addon.skunk.AbstractFreeSkunkDBSpec.Pet
 import io.github.boykush.eff.addon.skunk.TestDB
-import io.github.boykush.eff.addon.skunk.dbCommandIO.SkunkDBCommandIOEffect
-import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOError
-import io.github.boykush.eff.dbio.dbCommandIO.DBCommandIOTypes.DBCommandIOStack
-import io.github.boykush.eff.syntax.addon.skunk.dbCommandIO.ToSkunkDBCommandIOOps
+import io.github.boykush.eff.addon.skunk.dbTransactionIO.SkunkDBTransactionIOEffect
+import io.github.boykush.eff.dbio.dbTransactionIO.DBTransactionIOError
+import io.github.boykush.eff.dbio.dbTransactionIO.DBTransactionIOTypes.DBTransactionIOStack
+import io.github.boykush.eff.syntax.addon.skunk.dbTransactionIO.ToSkunkDBTransactionIOOps
 import org.atnos.eff.Eff
 import org.atnos.eff.syntax.addon.cats.effect._
 import org.atnos.eff.syntax.all._
 
-class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSkunkDBSpec {
+class SkunkDBTransactionIOInterpreterSpec extends AbstractFreeSkunkDBSpec {
 
   trait SetUp {
     val testDBConfig: SkunkDBConfig = TestDB.skunkDBConfig
 
-    type R = DBCommandIOStack
-    implicit val interpreter: SkunkDBCommandIOInterpreter =
-      new SkunkDBCommandIOInterpreter(
+    type R = DBTransactionIOStack
+    implicit val interpreter: SkunkDBTransactionIOInterpreter =
+      new SkunkDBTransactionIOInterpreter(
         testDBConfig
       )
 
     def checkDuplicateKeyError(result: Either[Throwable, Unit]): Boolean =
       result match {
-        case Left(DBCommandIOError(e)) => {
+        case Left(DBTransactionIOError(e)) => {
           e.getMessage.contains("Duplicate key")
         }
-        case Left(e)                   => false
-        case Right(_)                  => false
+        case Left(e)                       => false
+        case Right(_)                      => false
       }
   }
 
@@ -40,7 +40,7 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSkunkDBSpec {
         val pet: Pet = Pet.randomGen
 
         val effects: Eff[R, Option[Pet]] =
-          SkunkDBCommandIOEffect.withDBSession[R, Option[Pet]] { session =>
+          SkunkDBTransactionIOEffect.withDBSession[R, Option[Pet]] { session =>
             for {
               _        <- session.prepare(insertPet()).flatMap(pc => pc.execute(pet))
               maybePet <-
@@ -49,18 +49,18 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSkunkDBSpec {
           }
 
         val result: Either[Throwable, Option[Pet]] = await(
-          effects.runDBCommandIO
+          effects.runDBTransactionIO
             .runEither[Throwable]
             .unsafeToFuture
         )
 
         result mustBe Right(Some(pet))
       }
-      "Catch DBCommandIOError and rollback when occurred error" in new SetUp {
+      "Catch DBTransactionIOError and rollback when occurred error" in new SetUp {
         val pet: Pet = Pet.randomGen
 
         val effects1: Eff[R, Unit] =
-          SkunkDBCommandIOEffect.withDBSession[R, Unit] { session =>
+          SkunkDBTransactionIOEffect.withDBSession[R, Unit] { session =>
             for {
               _ <- session.prepare(insertPet()).flatMap(pc => pc.execute(pet))
               _ <- session.prepare(insertPet()).flatMap(pc => pc.execute(pet))
@@ -69,7 +69,7 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSkunkDBSpec {
 
         // Duplicate error occurred
         val result1: Either[Throwable, Unit] = await(
-          effects1.runDBCommandIO
+          effects1.runDBTransactionIO
             .runEither[Throwable]
             .unsafeToFuture
         )
@@ -88,10 +88,10 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSkunkDBSpec {
 
         val effects1: Eff[R, Unit] = {
           for {
-            _ <- SkunkDBCommandIOEffect.withDBSession[R, Unit](
+            _ <- SkunkDBTransactionIOEffect.withDBSession[R, Unit](
               _.prepare(insertPet()).flatMap(pc => pc.execute(pet)).void
             )
-            _ <- SkunkDBCommandIOEffect.withDBSession[R, Unit](
+            _ <- SkunkDBTransactionIOEffect.withDBSession[R, Unit](
               _.prepare(insertPet()).flatMap(pc => pc.execute(pet)).void
             )
           } yield ()
@@ -99,7 +99,7 @@ class SkunkDBCommandIOInterpreterSpec extends AbstractFreeSkunkDBSpec {
 
         // Duplicate error occurred
         val result1: Either[Throwable, Unit] = await(
-          effects1.runDBCommandIO
+          effects1.runDBTransactionIO
             .runEither[Throwable]
             .unsafeToFuture
         )

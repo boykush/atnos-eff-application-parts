@@ -1,0 +1,5 @@
+package io.github.boykush.eff.dbio.dbTransactionIO
+
+trait DBTransactionIOEffect extends DBTransactionIOTypes with DBTransactionIOCreation
+
+object DBTransactionIOEffect extends DBTransactionIOEffect
