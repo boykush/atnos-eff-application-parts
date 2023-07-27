@@ -26,7 +26,8 @@ class SkunkDBTransactionIOInterpreter @Inject() (
     m: Member.Aux[DBTransactionIO, R, U],
     io: _io[U],
     te: _throwableEither[U]
-  ): Eff[U, A] =
+  ): Eff[U, A] = {
+    // FIXME: Explore implementations that do not use unsafe Resource.allocated
     for {
       /** allocate(open) resource */
       poolAllocated <- fromIO(dbResource.allocated)
@@ -49,6 +50,7 @@ class SkunkDBTransactionIOInterpreter @Inject() (
       _      <- fromIO(sessionCloser)
       _      <- fromIO(poolReleaser)
     } yield result
+  }
 
   private def runInternal[R, U, A](effects: Eff[R, A])(session: Session[IO])(implicit
     m: Member.Aux[DBTransactionIO, R, U],
