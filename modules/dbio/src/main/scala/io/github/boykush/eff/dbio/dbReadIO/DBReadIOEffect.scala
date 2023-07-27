@@ -1,5 +1,5 @@
 package io.github.boykush.eff.dbio.dbReadIO
 
-trait DBReadIOEffect extends DBReadIOTypes with DBReadIOCreation
+trait DBReadIOEffect extends DBReadIOTypes
 
 object DBReadIOEffect extends DBReadIOEffect

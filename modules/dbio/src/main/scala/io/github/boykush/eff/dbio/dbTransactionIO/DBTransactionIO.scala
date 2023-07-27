@@ -5,4 +5,6 @@ import io.github.boykush.eff.dbio.DBSession
 
 sealed trait DBTransactionIO[+A]
 
-case class WithDBSession[S, T](f: DBSession[S] => IO[T]) extends DBTransactionIO[T]
+abstract class WithDBSession[S: DBSession, T] extends DBTransactionIO[T] {
+  val f: S => IO[T]
+}
