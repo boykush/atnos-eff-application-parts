@@ -5,6 +5,6 @@ import io.github.boykush.eff.dbio.DBSession
 
 sealed trait DBReadIO[+A]
 
-abstract class WithDBSession[S: DBSession, T]() extends DBReadIO[T] {
+abstract class WithDBSession[S: DBSession, T] extends DBReadIO[T] {
   val f: S => IO[T]
 }
