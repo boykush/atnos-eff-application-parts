@@ -1,10 +1,7 @@
 package io.github.boykush.eff.dbio.dbTransactionIO
 
-import cats.effect.IO
-import io.github.boykush.eff.dbio.DBSession
+import io.github.boykush.eff.dbio.DBSessionF
 
 sealed trait DBTransactionIO[+A]
 
-abstract class WithDBSession[S: DBSession, T] extends DBTransactionIO[T] {
-  val f: S => IO[T]
-}
+case class WithDBSession[T](f: DBSessionF[T]) extends DBTransactionIO[T]

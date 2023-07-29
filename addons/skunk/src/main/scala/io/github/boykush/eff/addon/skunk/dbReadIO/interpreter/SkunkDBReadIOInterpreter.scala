@@ -4,9 +4,10 @@ import com.google.inject.Inject
 import cats.effect._
 import cats.effect.kernel.Resource
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
-import io.github.boykush.eff.addon.skunk.dbReadIO.SkunkDBReadIO.WithDBSession
+import io.github.boykush.eff.addon.skunk.SkunkDBSession
 import io.github.boykush.eff.dbio.dbReadIO.DBReadIO
 import io.github.boykush.eff.dbio.dbReadIO.DBReadIOError
+import io.github.boykush.eff.dbio.dbReadIO.WithDBSession
 import io.github.boykush.eff.dbio.dbReadIO.interpreter.DBReadIOInterpreter
 import natchez.Trace.Implicits.noop
 import org.atnos.eff.Interpret._
@@ -29,7 +30,7 @@ class SkunkDBReadIOInterpreter @Inject() (
   ): Eff[U, A] = translate(effects)(new Translate[DBReadIO, U] {
     override def apply[X](readIO: DBReadIO[X]): Eff[U, X] =
       readIO match {
-        case WithDBSession(f: (Session[IO] => IO[X])) => fromIO[U, ThrowableEither[X]] {
+        case WithDBSession(sessionF) => fromIO[U, ThrowableEither[X]] {
             dbResource.use { pooled =>
               pooled.use { session =>
                 session
@@ -38,7 +39,7 @@ class SkunkDBReadIOInterpreter @Inject() (
                     accessMode = TransactionAccessMode.ReadOnly
                   )
                   .use { _ =>
-                    f(session).attempt
+                    sessionF.execute[SkunkDBSession](SkunkDBSession(session)).attempt
                   }
               }
             }

@@ -1,10 +1,7 @@
 package io.github.boykush.eff.dbio.dbReadIO
 
-import cats.effect.IO
-import io.github.boykush.eff.dbio.DBSession
+import io.github.boykush.eff.dbio.DBSessionF
 
 sealed trait DBReadIO[+A]
 
-abstract class WithDBSession[S: DBSession, T] extends DBReadIO[T] {
-  val f: S => IO[T]
-}
+case class WithDBSession[T](f: DBSessionF[T]) extends DBReadIO[T]

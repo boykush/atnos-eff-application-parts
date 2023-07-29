@@ -4,6 +4,4 @@ import cats.effect.IO
 import io.github.boykush.eff.dbio.DBSession
 import skunk.Session
 
-object SkunkDBSession {
-  implicit val dbSessionOps: DBSession[Session[IO]] = new DBSession[Session[IO]] {}
-}
+case class SkunkDBSession(v: Session[IO]) extends DBSession

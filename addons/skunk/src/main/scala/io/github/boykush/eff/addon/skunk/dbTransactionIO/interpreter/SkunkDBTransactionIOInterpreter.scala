@@ -4,8 +4,9 @@ import cats.effect._
 import cats.effect.kernel.Resource
 import com.google.inject.Inject
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
-import io.github.boykush.eff.addon.skunk.dbTransactionIO.SkunkDBTransactionIO.WithDBSession
+import io.github.boykush.eff.addon.skunk.SkunkDBSession
 import io.github.boykush.eff.dbio.dbTransactionIO.DBTransactionIO
+import io.github.boykush.eff.dbio.dbTransactionIO.WithDBSession
 import io.github.boykush.eff.dbio.dbTransactionIO.DBTransactionIOError
 import io.github.boykush.eff.dbio.dbTransactionIO.interpreter.DBTransactionIOInterpreter
 import natchez.Trace.Implicits.noop
@@ -59,9 +60,9 @@ class SkunkDBTransactionIOInterpreter @Inject() (
   ): Eff[U, A] = translate(effects)(new Translate[DBTransactionIO, U] {
     override def apply[X](sessionIO: DBTransactionIO[X]): Eff[U, X] =
       sessionIO match {
-        case WithDBSession(f: (Session[IO] => IO[X])) =>
+        case WithDBSession(f) =>
           fromIO[U, ThrowableEither[X]](
-            f(session).attempt
+            f.execute[SkunkDBSession](SkunkDBSession(session)).attempt
           ).flatMap(either =>
             fromEither[U, Throwable, X](
               either.left.map(e => DBTransactionIOError(e))
