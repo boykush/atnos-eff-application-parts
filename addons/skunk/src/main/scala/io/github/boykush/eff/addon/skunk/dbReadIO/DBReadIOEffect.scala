@@ -8,7 +8,7 @@ import io.github.boykush.eff.dbio.dbReadIO.DBReadIOEffect._
 import org.atnos.eff.Eff
 import skunk.Session
 
-trait SkunkDBReadIOEffect {
+trait DBReadIOEffect {
   def withDBSession[R: _dbReadIO, A](f: Session[IO] => IO[A]): Eff[R, A] = {
     Eff.send[DBReadIO, R, A](
       WithDBSession[A](
@@ -18,4 +18,4 @@ trait SkunkDBReadIOEffect {
   }
 }
 
-object SkunkDBReadIOEffect extends SkunkDBReadIOEffect
+object DBReadIOEffect extends DBReadIOEffect

@@ -1,5 +1,10 @@
 package io.github.boykush.eff.dbio.dbTransactionIO
 
-case class DBTransactionIOError(e: Throwable) extends Throwable {
-  override def toString: String = e.toString
+trait DBTransactionIOError extends Throwable
+
+object DBTransactionIOError {
+  case class DatabaseError(e: Throwable) extends DBTransactionIOError
+
+  case object ResourceNotFoundError extends DBTransactionIOError
+
 }

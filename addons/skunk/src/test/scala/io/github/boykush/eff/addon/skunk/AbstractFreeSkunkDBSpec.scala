@@ -57,9 +57,21 @@ trait AbstractFreeSkunkDBSpec extends AbstractFreeSpec with BeforeAndAfterEach {
           INSERT INTO #$tableName VALUES ($varchar, $int2);
        """.command.gcontramap[Pet]
 
+  def updatePet(): Command[(Short, String)] =
+    sql"""
+          UPDATE #$tableName SET age = $int2 WHERE name = $varchar;
+       """.command
+
   def selectPetByName: Query[String, Pet] =
     sql"""
           SELECT name, age FROM #$tableName WHERE name = $varchar;
+       """
+      .query(varchar ~ int2)
+      .gmap[Pet]
+
+  def selectPetByNameWithLock: Query[String, Pet] =
+    sql"""
+          SELECT name, age FROM #$tableName WHERE name = $varchar FOR UPDATE;
        """
       .query(varchar ~ int2)
       .gmap[Pet]

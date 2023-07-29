@@ -6,8 +6,8 @@ import com.google.inject.Inject
 import io.github.boykush.eff.addon.skunk.SkunkDBConfig
 import io.github.boykush.eff.addon.skunk.SkunkDBSession
 import io.github.boykush.eff.dbio.dbTransactionIO.DBTransactionIO
-import io.github.boykush.eff.dbio.dbTransactionIO.WithDBSession
 import io.github.boykush.eff.dbio.dbTransactionIO.DBTransactionIOError
+import io.github.boykush.eff.dbio.dbTransactionIO.WithDBSession
 import io.github.boykush.eff.dbio.dbTransactionIO.interpreter.DBTransactionIOInterpreter
 import natchez.Trace.Implicits.noop
 import org.atnos.eff.Interpret._
@@ -65,7 +65,7 @@ class SkunkDBTransactionIOInterpreter @Inject() (
             f.execute[SkunkDBSession](SkunkDBSession(session)).attempt
           ).flatMap(either =>
             fromEither[U, Throwable, X](
-              either.left.map(e => DBTransactionIOError(e))
+              either.left.map(e => DBTransactionIOError.DatabaseError(e))
             )
           )
       }
