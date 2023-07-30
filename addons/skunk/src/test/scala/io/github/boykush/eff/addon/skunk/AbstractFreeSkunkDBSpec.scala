@@ -69,6 +69,13 @@ trait AbstractFreeSkunkDBSpec extends AbstractFreeSpec with BeforeAndAfterEach {
       .query(varchar ~ int2)
       .gmap[Pet]
 
+  def selectPet: Query[(Long, Long), Pet] =
+    sql"""
+          SELECT name, age FROM #$tableName LIMIT $int8 OFFSET $int8;
+       """
+      .query(varchar ~ int2)
+      .gmap[Pet]
+
   def selectPetByNameWithLock: Query[String, Pet] =
     sql"""
           SELECT name, age FROM #$tableName WHERE name = $varchar FOR UPDATE;

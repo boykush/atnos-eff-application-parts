@@ -2,6 +2,7 @@ package io.github.boykush.eff.syntax.addon.skunk
 
 import io.github.boykush.eff.addon.skunk.dbReadIO.interpreter.SkunkDBReadIOInterpreter
 import io.github.boykush.eff.dbio.dbReadIO.DBReadIO
+import io.github.boykush.eff.dbio.dbReadIO.Pager
 import org.atnos.eff.addon.cats.effect.IOEffect._io
 import org.atnos.eff.Eff
 import org.atnos.eff.Member
@@ -15,7 +16,15 @@ trait dbReadIO {
       either: _throwableEither[U],
       int: SkunkDBReadIOInterpreter
     ): Eff[U, A] =
-      int.run[R, U, A](e)
+      int.run[R, U, A](e, Pager.all)
+
+    def runDBReadIOWithPager[U](pager: Pager)(implicit
+      m: Member.Aux[DBReadIO, R, U],
+      io: _io[U],
+      either: _throwableEither[U],
+      int: SkunkDBReadIOInterpreter
+    ): Eff[U, A] =
+      int.run[R, U, A](e, pager)
   }
 }
 
