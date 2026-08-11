@@ -36,6 +36,9 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         cache: 'sbt'
+    # ubuntu-24.04 dropped the preinstalled sbt that this workflow used to rely on.
+    - name: Set up sbt
+      uses: sbt/setup-sbt@8feba82adc7f01ddcf8165b86f778bdb5b82cebc # v1.5.7
     - name: Run tests
       env:
         ADDONS_SKUNK_DB_CONFIG_HOST: localhost
