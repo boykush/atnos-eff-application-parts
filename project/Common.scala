@@ -5,7 +5,7 @@ object Common {
   lazy val commonSettings = Seq(
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.2.15" % "test",
-      "org.atnos" %% "eff" % "6.0.1"
+      "org.atnos" %% "eff" % "6.0.3"
     ),
     scalacOptions += "-Wunused:imports"
   )
