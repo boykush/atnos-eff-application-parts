@@ -3,7 +3,7 @@ organization := "io.github.boykush"
 
 inThisBuild(
   List(
-    scalaVersion      := "2.13.11",
+    scalaVersion      := "3.8.4",
     semanticdbEnabled := true, // enable SemanticDB
     semanticdbVersion := "4.8.5"
   )
