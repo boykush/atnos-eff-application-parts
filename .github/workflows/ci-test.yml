@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       addons_skunk_ci_test_db:
-        image: postgres:17@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
+        image: postgres:17@sha256:e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449
         env:
           POSTGRES_USER: ${{secrets.ADDONS_SKUNK_DB_CONFIG_USER}}
           POSTGRES_PASSWORD: ${{secrets.ADDONS_SKUNK_DB_CONFIG_PASSWORD}}
