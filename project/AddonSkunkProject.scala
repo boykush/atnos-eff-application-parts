@@ -4,7 +4,7 @@ import sbt._
 object AddonSkunkProject {
   lazy val settings = Seq(
     libraryDependencies ++= Seq(
-      "org.tpolecat"   %% "skunk-core"  % "0.5.1",
+      "org.tpolecat"   %% "skunk-core"  % "0.6.5",
       "net.codingwell" %% "scala-guice" % "7.0.0",
       "com.typesafe"    % "config"      % "1.4.9"
     )
